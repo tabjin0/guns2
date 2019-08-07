@@ -30,6 +30,16 @@
     </repositories>
 
     <dependencies>
+
+<!--        <dependency>-->
+<!--            <groupId>com.stylefeng</groupId>-->
+<!--            <artifactId>guns-core</artifactId>-->
+<!--        </dependency>-->
+<!--        <dependency>-->
+<!--            <groupId>com.stylefeng</groupId>-->
+<!--            <artifactId>guns-generator</artifactId>-->
+<!--        </dependency>-->
+
         <!--通用依赖-->
         <dependency>
             <groupId>com.baomidou</groupId>
