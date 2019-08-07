@@ -1,0 +1,152 @@
+<html>
+
+<head>
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"/>
+    <meta charset="utf-8"/>
+    <title>canvas水印</title>
+    <style type="text/css">
+        .container {
+            display: flex;
+            flex-direction: row;
+        }
+
+        .canvas-container {
+            border: 1px solid #aaa;
+            width: 800px;
+            height: 480px;
+            margin: 0 auto;
+        }
+
+        .box-container {
+            margin-top: 20px;
+        }
+
+        .add-word {
+            /*background-color: #f00;*/
+            background-color: transparent;
+            margin-left: 50px;
+            width: 60px;
+            height: 40px;
+        }
+
+    </style>
+</head>
+
+<body>
+<div class="container">
+    <div class="canvas-container">
+        <canvas width='800' height="480"></canvas>
+    </div>
+    <div>
+        <div class="box-container">
+            <div class="add-word" style="width: 200px;">添加文字</div>
+            <!--<span class="red-box" contenteditable="true"></span>-->
+        </div>
+
+        <!--  颜色选择器  -->
+        <div>
+            颜色: <input class="jscolor" value="ab2567">
+        </div>
+
+        <!--  图片选择器  -->
+        <div>
+            <p>
+                <label>添加图片：</label>
+                <input type="file" id="file_input"/>
+            </p>
+            <div id="result"></div>
+        </div>
+    </div>
+
+
+    <div id="edit-word" style="display: block;">
+
+    </div>
+</div>
+</body>
+
+<script src="stage.js"></script>
+<script src="sprite.js"></script>
+<script src="jscolor.js"></script>
+<script>
+    function setTextColor(picker) {
+        document.getElementsByTagName('body')[0].style.color = '#' + picker.toString()``
+    }
+</script>
+<script type="text/javascript">
+    const BOX_PADDING = 10;
+    const ICON_HEIGHT = 20;
+    const ROTATE_ICON =
+        'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAA70lEQVQ4T7XTL0vDURTG8c80aJVhEWx2u2AyTYNonmAwGi2Cgth8AWNBgzYZLKmwMJhYLL4Io9hFDP7hyJ2My+/nlLHTzj3P/d5znntvxYhRGXG/sQGWsI1nfGIGD7hI+U/jRR0c4QmneE/KSRxgFruDY+eAFSwjIEVxgkc0+8UccIcaXkoAE7hJmm/JIKCKM2wMuZku1vCWA6bQwvoQQAer+MgBkfdS8TWDzGMTDVyVjRB7trCIvQwQa3VMo43bMhPDk2MsYD85HtoAXOMch79dY78WRsaJc9hJD+oS8R4iAn5f5MG/v8bY/sKfO/kCL2skEWR80iIAAAAASUVORK5CYII=';
+    const DEL_ICON =
+        'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAABIUlEQVRYR+3VPUvEQBSF4WdLsRdBQQsrURErC/31CtoJfiDICooigr22cnEDYdGdO5tgmqQJITNz3jn3zpmJgZ/JwPpGgNGB0YGsAzt4w2fy2K5iHY+l8RmAXdzhFad4Kiy6jTNsYh+3i8ZnAFZwjXChBNEWn+IAX10BYn7YeYmtBRBt8Wcc472PEjRrhKXnf0DMi5/MQEv61VH8G0SINDWPnafFY2KmB+Z30YYIwXiiNNXiywLEvIC4mL3jeynxrgBNP/w7wKAlyDRh6vg1jVXThNljGAEUiVnMgJoeqA2iNETGgdoojtMRwA847COK93CTuAeassadEcEUEHGR3fdxFxzhBR/FbP0ZsIYNXJXGZ0pQWqPT/xFgdGB0YHAHvgG1jEwhcd+TtgAAAABJRU5ErkJggg==';
+    const SCALE_ICON =
+        'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAABJElEQVRYR+3UPS8EURTG8d82GolE0NArlT6ARqEiChrRKXTUWqUtJSpCQoNKlEqlL6CloJB4aVRyky2QnZk7szOzzb3NFPPkPP/z3HNux5BPZ8j+EkBKICVQJYExnCF8s84D9vFatOZVAXYKCq9iGvN4zNNWAShqaglXeMItttsEWMY5NrGASawMCjCOb3wVtB7ML7CGaxzVBXCKF+zmAPw3D9LaAEI3AWArA6CfeWsAWeatAOSZNw4QBu0Y672B63c7jc1AMD/prddNzmB2MYGNQdfw9xDGmgfPUYzgrS6Au8jOi17KP/9jnuJDLGImIvZS5kEcAzCLezzjssDhAO9lKGIAQr0p7GEup/hnbys+mgAoU7OUNjaBUkXLiBNASiAl8AO7pD8h3UM4owAAAABJRU5ErkJggg==';
+
+    /**
+     * 页面加载
+     */
+    window.onload = function () {
+
+        const stage = new Stage({
+            canvas: document.querySelector('canvas')
+        });
+
+        var text = "请输入内容";
+        document.querySelector('.add-word').addEventListener('click', function () {
+
+            const randomX = Math.floor(Math.random() * 200);// 随机X坐标
+            const randomY = Math.floor(Math.random() * 200);// 随机Y坐标
+            const sprite = new Sprite({// 新建canvas内元素
+                pos: [randomX, randomY],
+                size: [120, 60],
+                minSize: [40, 20],
+                maxSize: [240, 120],
+                text: text,// 这边的文字有点问题
+                fontSize: "30",// 默认文字尺寸
+                show_level: 0
+            });
+            stage.append(sprite);// 添加canvas
+            // console.log(sprite.id);
+            // console.log(sprite);
+
+            // 后添加的页面设置文字
+            let spanHtml = '<span id="spanTextAdd-' + sprite.id + '" contenteditable="true" style="display: block;">"' + text + '"</span>'
+            document.getElementById("edit-word").innerHTML += spanHtml;
+        });
+
+        // 图片选择器 start
+        var result = document.getElementById("result");
+        var input = document.getElementById("file_input");
+
+        if (typeof FileReader === 'undefined') {
+            result.innerHTML = "抱歉，你的浏览器不支持 FileReader";
+            input.setAttribute('disabled', 'disabled');
+        } else {
+            input.addEventListener('change', readFile, false);
+        }
+
+        function readFile() {
+            var file = this.files[0];
+            if (!/image\/\w+/.test(file.type)) {
+                alert("文件必须为图片！");
+                return false;
+            }
+            var reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = function (e) {
+                result.innerHTML = '<img id="bg-img" src="' + this.result + '" alt=""/>'
+                console.log(this.result);
+            }
+            //
+            // var ctx = this.canvas.getContext('2d');
+            // var bg_image = new Image();
+            // bg_image.src = this.result;
+            // ctx.drawImage(bg_image, 0, 0);
+        }
+        // 图片选择器 end
+    }
+</script>
+
+</html>
