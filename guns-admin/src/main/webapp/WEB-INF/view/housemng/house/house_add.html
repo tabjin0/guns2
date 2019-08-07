@@ -1,0 +1,35 @@
+@layout("/common/_container.html"){
+<div class="ibox float-e-margins">
+    <div class="ibox-content">
+        <div class="form-horizontal">
+
+            <input type="hidden" id="id" value="">
+
+            <div class="row">
+                <!-- 左侧显示 -->
+                <div class="col-sm-6 b-r">
+                    <!-- 房屋id不需要输入，自增 -->
+                    <#input id="id" name="ID" underline="true"/>
+                    <#input id="user" name="业主名称" underline="true"/>
+                    <#input id="address" name="房屋地址" underline="true"/>
+                </div>
+                <!-- 右侧显示 -->
+                <div class="col-sm-6">
+                    <#input id="birthday" name="交房日期" underline="true" type="date"
+                    clickFun="laydate({istime: false, format: 'YYYY-MM-DD'})"/>
+                    <#input id="desc" name="房屋描述" underline="true"/>
+                </div>
+            </div>
+
+            <div class="row btn-group-m-t">
+                <div class="col-sm-10">
+                    <#button btnCss="info" name="提交" id="ensure" icon="fa-check" clickFun="HouseInfoDlg.addSubmit()"/>
+                    <#button btnCss="danger" name="取消" id="cancel" icon="fa-eraser" clickFun="HouseInfoDlg.close()"/>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+<script src="${ctxPath}/static/modular/housemng/house/house_info.js"></script>
+@}

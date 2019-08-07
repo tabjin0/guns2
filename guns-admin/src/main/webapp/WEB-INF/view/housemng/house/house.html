@@ -1,0 +1,980 @@
+@layout("/common/_container.html"){
+<html>
+
+<head>
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"/>
+    <meta charset="utf-8"/>
+    <title>canvas水印</title>
+    <style type="text/css">
+        .container {
+            display: flex;
+            flex-direction: row;
+        }
+
+        .canvas-container {
+            border: 1px solid #aaa;
+            width: 800px;
+            height: 480px;
+            margin: 0 auto;
+        }
+
+        .box-container {
+            margin-top: 20px;
+        }
+
+        .add-word {
+            /*background-color: #f00;*/
+            background-color: transparent;
+            margin-left: 50px;
+            width: 60px;
+            height: 40px;
+        }
+
+    </style>
+</head>
+
+<body>
+<div class="container">
+    <div class="canvas-container">
+        <canvas width='800' height="480"></canvas>
+    </div>
+    <div>
+        <div class="box-container">
+            <div class="add-word" style="width: 200px;">添加文字</div>
+            <!--<span class="red-box" contenteditable="true"></span>-->
+        </div>
+
+        <!--  颜色选择器  -->
+        <div>
+            颜色: <input class="jscolor" value="ab2567">
+        </div>
+
+        <!--  图片选择器  -->
+        <div>
+            <p>
+                <label>添加图片：</label>
+                <input type="file" id="file_input"/>
+            </p>
+            <div id="result"></div>
+        </div>
+    </div>
+
+
+    <div id="edit-word" style="display: block;">
+
+    </div>
+</div>
+</body>
+
+<!--<script src="${ctxPath}/static/modular/housemng/house/sprite.js"></script>-->
+<!--<script src="${ctxPath}/static/modular/housemng/house/stage.js"></script>-->
+<!--<script src="${ctxPath}/static/modular/housemng/house/jscolor.js"></script>-->
+<script>
+    function setTextColor(picker) {
+        document.getElementsByTagName('body')[0].style.color = '#' + picker.toString()``
+    }
+</script>
+<script type="text/javascript">
+    /************************************ Stage的方法 *************************************/
+
+    /**
+     * Stage表示整个canvas区域
+     */
+    class Stage {
+
+        constructor(props) {
+
+            this.canvas = props.canvas;
+            this.ctx = this.canvas.getContext('2d');
+
+            // 用一个数组来保存canvas中的元素。每一个元素都是一个Sprite类的实例。
+            this.spriteList = [];
+
+            // 获取canvas在视窗中的位置，以便计算用户touch时，相对与canvas内部的坐标。
+            const pos = this.canvas.getBoundingClientRect();
+            this.canvasOffsetLeft = pos.left;
+            this.canvasOffsetTop = pos.top;
+
+            this.dragSpriteTarget = null;// 拖拽的对象
+            this.scaleSpriteTarget = null;// 缩放的对象
+            this.rotateSpriteTarget = null;// 旋转的对象
+
+            this.dragStartX = undefined;
+            this.dragStartY = undefined;
+            this.scaleStartX = undefined;
+            this.scaleStartY = undefined;
+            this.rotateStartX = undefined;
+            this.rotateStartY = undefined;
+
+            this.initEvent();
+
+        }
+
+        /**
+         * stage添加sprite，
+         * spriteList先入spriteList，再通过drawSprite()加入canvas
+         */
+        append(sprite) {
+            this.spriteList.push(sprite);
+            console.log("添加至列表");
+            console.log("打印spriteList列表");
+            console.log(this.spriteList);// Array[]  0: Object { id: 1562120734373, text: "niubi", color: undefined, … }
+            console.log(this.spriteList[0]);
+            this.drawSprite();
+        }
+
+        /**
+         * Stage
+         * 监听事件
+         * 用户开始触摸(touchstart)时，获取用户的触摸对象，是Sprite的本体？删除按钮？缩放按钮？旋转按钮？并且根据各种情况，对变化参数进行初始化。
+         * 用户移动手指(touchmove)时，根据手指的坐标，更新stage中的所有元素的位置、大小，记录变化参数。修改对应sprite的属性值。同时对canvas进行重绘。
+         * 用户一旦停止触摸(touchend)时，根据变化参数，更新sprite的坐标，同时对变化参数进行重置。
+         * 在touchmove的过程中，并不需要更新sprite的坐标，只需要记录变化的参数即可。在touchend过程中，再进行坐标的更新。坐标的唯一用处，就是判断用户点击时，落点是否在指定区域内。
+         */
+        // initEvent() {
+        //     this.canvas.addEventListener('touchstart', e => {
+        //         this.handleTouchStart(e);// 触摸开始
+        //     });
+        //     this.canvas.addEventListener('touchend', () => {
+        //         this.handleTouchEnd();// 触摸结束
+        //     });
+        //     this.canvas.addEventListener('touchmove', e => {
+        //         this.handleTouchMove(e);// 触摸中
+        //         e.preventDefault();
+        //     }, { passive: false });
+        // }
+        initEvent() {
+            this.canvas.addEventListener('mousedown', e => {
+                this.handleTouchStart(e);// 触摸开始
+            });
+            this.canvas.addEventListener('mouseup', () => {
+                this.handleTouchEnd();// 触摸结束
+            });
+            this.canvas.addEventListener('mousemove', e => {
+                this.handleTouchMove(e);// 触摸中
+                e.preventDefault();
+            }, { passive: false });
+        }
+
+
+
+        /**
+         * initEvent()
+         * 处理touchstart
+         */
+        handleTouchStart(e) {
+            // console.log("9999");
+            // console.log(e);
+            const touchEvent = this.normalizeTouchEvent(e);// 返回点击坐标
+
+            if (!touchEvent) {
+                return;
+            }
+            let target = null
+
+            // 触摸在sprite上，可以拖动
+            if (target = this.getTouchSpriteTarget(touchEvent)) {// 返回当前touch的sprite
+                this.initDragEvent(target, touchEvent);// 初始化sprite的拖拽事件
+                return;
+            }
+
+            // 缩放
+            if (target = this.getTouchTargetOfSprite(touchEvent, 'scaleIcon')) {// 判断是否touch在了sprite中的某一部分上，返回这个sprite
+                this.initScaleEvent(target, touchEvent);// 初始化sprite的缩放事件
+                return;
+            }
+
+            // 旋转
+            if (target = this.getTouchTargetOfSprite(touchEvent, 'rotateIcon')) {// 判断是否touch在了sprite中的某一部分上，返回这个sprite
+                this.initRotateEvent(target, touchEvent);// 初始化sprite的角度事件
+                return;
+            }
+
+            // 删除
+            if (target = this.getTouchTargetOfSprite(touchEvent, 'delIcon')) {// 判断是否touch在了sprite中的某一部分上，返回这个sprite
+                this.remove(target);// 从canvas场景中删除
+                return;
+            }
+
+        }
+
+        /**
+         * initEvent()
+         * 处理touchmove
+         */
+        handleTouchMove(e) {
+
+            const touchEvent = this.normalizeTouchEvent(e);// 返回点击坐标
+            if (!touchEvent) {
+                return;
+            }
+            const { touchX, touchY } = touchEvent;
+
+            // 拖拽
+            if (this.dragSpriteTarget) {
+                this.reCalSpritePos(this.dragSpriteTarget, touchX, touchY);// 通过触摸的坐标重新计算sprite的坐标
+                this.drawSprite();
+                return;
+            }
+
+            // 缩放
+            if (this.scaleSpriteTarget) {
+                this.reCalSpriteSize(this.scaleSpriteTarget, touchX, touchY);// 通过触摸的【横】坐标重新计算sprite的大小
+                this.drawSprite();
+                return;
+            }
+
+            // 旋转
+            if (this.rotateSpriteTarget) {
+                this.reCalSpriteRotate(this.rotateSpriteTarget, touchX, touchY);// 重新计算sprite的角度
+                this.drawSprite();
+                return;
+            }
+
+        }
+
+        /**
+         * initEvent()
+         * 处理touchend
+         */
+        handleTouchEnd() {
+            if(this.rotateSpriteTarget) {
+                this.rotateSpriteTarget.updateCoordinateByRotate();// 旋转的对象  根据旋转角度更新sprite的所有部分的顶点坐标
+            }
+            if(this.scaleSpriteTarget) {
+                this.scaleSpriteTarget.updateCoordinateByScale();// 缩放的对象 根据缩放比更新顶点坐标，根据大小改变
+            }
+            this.scaleSpriteTarget = null;// 置空缩放的对象
+            this.dragSpriteTarget = null;// 置空拖拽的对象
+            this.rotateSpriteTarget = null;// 置空旋转的对象
+        }
+
+        /**
+         * handleTouchStart(e)
+         * 初始化sprite的拖拽事件
+         */
+        initDragEvent(sprite, { touchX, touchY }) {
+            this.dragSpriteTarget = sprite;
+            this.dragStartX = touchX;
+            this.dragStartY = touchY;
+        }
+
+        /**
+         * handleTouchStart(e)
+         * 初始化sprite的缩放事件
+         */
+        initScaleEvent(sprite, { touchX, touchY }) {
+            this.scaleSpriteTarget = sprite;
+            this.scaleStartX = touchX;
+            this.scaleStartY = touchY;
+        }
+
+        /**
+         * handleTouchStart(e)
+         * 初始化sprite的缩放事件
+         */
+        initRotateEvent(sprite, { touchX, touchY }) {
+            this.rotateSpriteTarget = sprite;
+            this.rotateStartX = touchX;
+            this.rotateStartY = touchY;
+        }
+
+        /**
+         * handleTouchMove(e)
+         * 通过触摸的坐标重新计算sprite的坐标
+         */
+        reCalSpritePos(sprite, touchX, touchY) {
+            const [oX, oY] = sprite.pos;
+            const dirX = touchX - this.dragStartX;
+            const dirY = touchY - this.dragStartY;
+            sprite.resetPos(dirX, dirY);
+            this.dragStartX = touchX;
+            this.dragStartY = touchY;
+        }
+
+        /**
+         * handleTouchMove(e)
+         * 通过触摸的【横】坐标重新计算sprite的大小
+         */
+        reCalSpriteSize(sprite, touchX, touchY) {
+            console.log("reCalSpriteSize");
+            console.log(sprite);
+            // 使用X轴方向作为缩放比例的判断标准
+            const [centerX, centerY] = sprite.center;// 获得当前sprite的中心坐标
+            const startVector = [this.scaleStartX - centerX, this.scaleStartY - centerY];
+            const endVector = [touchX - centerX, touchY - centerY];
+            const dirVector = [touchX - this.scaleStartX, touchY - this.scaleStartY];
+            const startVectorLength = Math.sqrt(Math.pow(startVector[0], 2) + Math.pow(startVector[1],2));
+            const endVectorLength = Math.sqrt(Math.pow(endVector[0], 2) + Math.pow(endVector[1],2));
+            const dirX = Math.abs(dirVector[0]);
+            const dirY = Math.abs(dirVector[1]);
+            let dir = dirX > dirY ? dirX : dirY;
+            if(endVectorLength < startVectorLength) {
+                dir = -dir;
+            }
+            sprite.resetSize(dir);
+            this.scaleStartX = touchX;
+            this.scaleStartY = touchY;
+        }
+
+        /**
+         * handleTouchMove(e)
+         * 重新计算sprite的角度
+         */
+        reCalSpriteRotate(sprite, touchX, touchY) {
+            const [centerX, centerY] = sprite.center;
+            const x1 = this.rotateStartX - centerX;
+            const y1 = this.rotateStartY - centerY;
+            const x2 = touchX - centerX;
+            const y2 = touchY - centerY;
+
+            // 因为sin函数
+            const numerator =  x1 * y2 - y1 * x2;
+            const denominator = Math.sqrt(Math.pow(x1, 2) + Math.pow(y1, 2)) * Math.sqrt(Math.pow(x2, 2) + Math.pow(
+                y2, 2));
+            const sin = numerator / denominator;
+            const angleDir = Math.asin(sin);
+
+            sprite.setRotateAngle(angleDir);
+            this.rotateStartX = touchX;
+            this.rotateStartY = touchY;
+        }
+
+        /**
+         * handleTouchStart(e)
+         * 返回当前touch的sprite
+         */
+        getTouchSpriteTarget({ touchX, touchY }) {
+            return this.spriteList.reduce((sum, sprite) => { // 这里一直循环到最后，保证每一次移动的都是最后插入的sprite
+                if (this.checkIfTouchIn({ touchX, touchY }, sprite)) {
+                    sum = sprite;
+                }
+                return sum;
+            }, null);
+        }
+
+        /**
+         * handleTouchStart(e)
+         * 判断是否touch在了sprite中的某一部分上，返回这个sprite
+         */
+        getTouchTargetOfSprite({ touchX, touchY }, part) {
+            console.log("part");
+            console.log(part);
+            return this.spriteList.reduce((sum, sprite) => {
+                // 判断是否在在某个sprite中移动。当前默认所有的sprite都是长方形的。
+                if (this.checkIfTouchIn({ touchX, touchY }, sprite[part])) {
+                    sum = sprite;
+                    console.log("sprite[part]");
+                    console.log(sprite[part]);
+                    console.log(sprite[part]);
+                }
+                return sum;
+            }, null);
+        }
+
+        /**
+         * handleTouchStart(e)
+         * handleTouchMove(e)
+         * 返回点击坐标
+         */
+        normalizeTouchEvent(e) {
+            // const touches = [].slice.call(e.touches);
+            // console.log("777777777777777");
+            // // console.log(touches);
+            // console.log(e);
+            // if (touches.length > 1) { // 多点触摸，不做处理
+            //     return;
+            // }
+            // const target = touches[0];
+            const touchX = e.pageX - this.canvasOffsetLeft;
+            const touchY = e.pageY - this.canvasOffsetTop;
+            return {
+                touchX,
+                touchY
+            }
+        }
+
+        /**
+         * getTouchSpriteTarget({ touchX, touchY })
+         * getTouchTargetOfSprite({ touchX, touchY }, part)
+         * 判断是否在在某个sprite中移动。当前默认所有的sprite都是长方形的。
+         */
+        checkIfTouchIn({ touchX, touchY }, sprite) {
+            if (!sprite) {
+                return false;
+            }
+            const [[x1, y1], [x2, y2], [x3, y3], [x4, y4]] = sprite.coordinate;
+            const v1 = [x1 - touchX, y1 - touchY];
+            const v2 = [x2 - touchX, y2 - touchY];
+            const v3 = [x3 - touchX, y3 - touchY];
+            const v4 = [x4 - touchX, y4 - touchY];
+            if(
+                (v1[0] * v2[1] - v2[0] * v1[1]) > 0
+                && (v2[0] * v4[1] -  v4[0] * v2[1]) > 0
+                && (v4[0] * v3[1] - v3[0] * v4[1]) > 0
+                && (v3[0] * v1[1] -  v1[0] * v3[1]) > 0
+            ){
+                return true;
+            }
+            return false;
+
+        }
+
+        /**
+         * handleTouchStart(e)
+         * 从canvas场景中删除
+         */
+        remove(sprite) {
+            console.log("sprite id");
+            console.log(sprite.id);// 点击的sprite id
+            console.log("删除的sprite的id  start");
+            this.spriteList = this.spriteList.filter(item => {
+                console.log(item.id);
+                return item.id !== sprite.id;
+            });
+            console.log("删除的sprite的id  end");
+
+            console.log("剩下的sprite的id start");
+            this.spriteList.forEach(item => {
+                console.log(item.id);
+            });
+            console.log("剩下的sprite的id end");
+            this.drawSprite();// 重绘sprite
+        }
+
+        /**
+         * append(sprite)
+         * handleTouchMove(e)
+         * remove(sprite)
+         * 添加至canvas
+         */
+        drawSprite() {
+            this.clearStage();// 先清除
+            this.spriteList.forEach(item => {
+                item.draw(this.ctx);
+            });
+        }
+
+        /**
+         * drawSprite()
+         * 清除再重绘
+         */
+        clearStage() {
+            this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        }
+    }
+    /************************************ Stage的方法 *************************************/
+
+    /************************************ Sprite的方法 *************************************/
+
+    /**
+     * Sprite表示canvas中的元素
+     */
+    class Sprite {
+
+        constructor(props) {
+
+            // 每一个sprite都有一个唯一的id
+            this.id = Date.now() + Math.floor(Math.random() * 10);
+
+            this.text = props.text;
+            this.color = props.color;
+            this.fontSize = props.fontSize;
+            this.font = props.font;
+
+            this.pos = props.pos;// 在canvas中的位置
+            this.size = props.size;// sprite的当前大小
+            this.baseSize = props.size;// sprite的初始化大小
+            this.minSize = props.minSize;// sprite缩放时允许的最小size
+            this.maxSize = props.maxSize;// sprite缩放时允许的最大size
+
+            // 中心点坐标
+            this.center = [props.pos[0] + props.size[0] / 2, props.pos[1] + props.size[1] / 2];// 元素中间
+            this.delIcon = {};// 删除标志
+            this.scaleIcon = {};// 尺寸标志
+            this.rotateIcon = {};// 旋转标志
+
+            // 四个顶点的坐标,顺序为：左上，右上，左下，右下
+            this.coordinate = this.setCoordinate(this.pos, this.size);// 位置、大小调节
+
+            this.rotateAngle = 0; // 一共旋转的角度
+            this.rotateAngleDir = 0; // 每次旋转角度差值
+
+            this.scalePercent = 1; // 一共缩放的比例
+            this.parent = this;
+
+            this.init();
+        }
+
+        /**
+         * initDelIcon()
+         * initScaleIcon()
+         * initRotateIcon()
+         * 设置四个顶点的初始化坐标
+         * param pos 位置
+         * param size 大小
+         * returns {[*,*,*,*]}
+         */
+        setCoordinate(pos, size) {
+            return [
+                [pos[0], pos[1]],
+                [pos[0] + size[0], pos[1]],
+                [pos[0], pos[1] + size[1]],
+                [pos[0] + size[0], pos[1] + size[1]]
+            ];
+        }
+
+        setIconCoordinate(point) {
+            return [
+                [point[0] - ICON_HEIGHT / 2, point[1] - ICON_HEIGHT / 2],
+                [point[0] + ICON_HEIGHT / 2, point[1] - ICON_HEIGHT / 2],
+                [point[0] - ICON_HEIGHT / 2, point[1] + ICON_HEIGHT / 2],
+                [point[0] + ICON_HEIGHT / 2, point[1] + ICON_HEIGHT / 2]
+            ];
+        }
+
+        /**
+         * 根据旋转角度更新sprite的所有部分的顶点坐标
+         */
+        updateCoordinateByRotate() {
+            const angle = this.rotateAngleDir;
+            this.updateItemCoordinateByRotate(this, this.center, angle);
+            this.updateItemCoordinateByRotate(this.delIcon, this.center, angle);
+            this.updateItemCoordinateByRotate(this.scaleIcon, this.center, angle);
+            this.updateItemCoordinateByRotate(this.rotateIcon, this.center, angle);
+            this.rotateAngleDir = 0;
+        }
+
+        /**
+         * 根据缩放比例更新顶点坐标
+         */
+        updateItemCoordinateByScale(sprite, center, scale) {
+            const [centerX, centerY] = center;
+            const coordinateVector = sprite.coordinate.map(point => {
+                return [point[0] - centerX, point[1] - centerY];
+            });
+            const newCoordinateVector = coordinateVector.map(vector => {
+                const [x, y] = vector;
+                const newX = x * scale;
+                const newY = y * scale;
+                return [newX, newY];
+            });
+            sprite.coordinate = newCoordinateVector.map(vector => {
+                return [vector[0] + centerX, vector[1] + centerY];
+            });
+        }
+
+        /**
+         * 根据按钮icon的顶点坐标获取icon中心点坐标
+         */
+        getIconCenter(iconCoordinate) {
+            const point1 = iconCoordinate[0];
+            const point4 = iconCoordinate[3];
+            const x = (point1[0] + point4[0]) / 2;
+            const y = (point1[1] + point4[1]) / 2;
+            return [x, y];
+        }
+
+        /**
+         * 根据按钮icon的中心点坐标获取icon的顶点坐标
+         */
+        getIconCoordinateByIconCenter(center) {
+            const [x, y] = center;
+            return [
+                [x - ICON_HEIGHT / 2, y - ICON_HEIGHT / 2],
+                [x + ICON_HEIGHT / 2, y - ICON_HEIGHT / 2],
+                [x - ICON_HEIGHT / 2, y + ICON_HEIGHT / 2],
+                [x + ICON_HEIGHT / 2, y + ICON_HEIGHT / 2]
+            ];
+        }
+
+        /**
+         * 根据缩放比更新顶点坐标，根据大小改变
+         */
+        updateCoordinateByScale() {
+            const scale = this.size[0] / this.baseSize[0];
+
+            // 左上角旋转按钮
+            const [rotateCenterX, rotateCenterY] = this.getIconCenter(this.rotateIcon.coordinate);
+            const rotateVector = [rotateCenterX - this.center[0], rotateCenterY - this.center[1]];
+            const rotateVectorNew = [rotateVector[0] * scale, rotateVector[1] * scale];
+            const rotateIconCenter = [rotateVectorNew[0] + this.center[0], rotateVectorNew[1] + this.center[1]];
+            this.rotateIcon.coordinate = this.getIconCoordinateByIconCenter(rotateIconCenter);
+
+
+            // 右上角缩放按钮
+            const [scaleCenterX, scaleCenterY] = this.getIconCenter(this.scaleIcon.coordinate);
+            const scaleVector = [scaleCenterX - this.center[0], scaleCenterY - this.center[1]];
+            const scaleVectorNew = [scaleVector[0] * scale, scaleVector[1] * scale];
+            const scaleIconCenter = [scaleVectorNew[0] + this.center[0], scaleVectorNew[1] + this.center[1]];
+            this.scaleIcon.coordinate = this.getIconCoordinateByIconCenter(scaleIconCenter);
+
+
+            // 左下角删除按钮
+            const [delCenterX, delCenterY] = this.getIconCenter(this.delIcon.coordinate);
+            const delVector = [delCenterX - this.center[0], delCenterY - this.center[1]];
+            const delVectorNew = [delVector[0] * scale, delVector[1] * scale];
+            const delIconCenter = [delVectorNew[0] + this.center[0], delVectorNew[1] + this.center[1]];
+            this.delIcon.coordinate = this.getIconCoordinateByIconCenter(delIconCenter);
+
+            this.updateItemCoordinateByScale(this, this.center, scale);
+
+            this.baseSize = this.size.slice(0);
+
+
+        }
+
+        /**
+         * 根据旋转角度更新顶点坐标
+         */
+        updateItemCoordinateByRotate(target, center, angle) {
+            const [centerX, centerY] = center;
+            const coordinateVector = target.coordinate.map(point => {
+                return [point[0] - centerX, point[1] - centerY];
+            });
+            const newCoordinateVector = coordinateVector.map(vector => {
+                const [x, y] = vector;
+                // x2 = x1 * cos - y1 * sin;
+                // y2 = x1 * sin + y1 * cos;
+                const newX = x * Math.cos(angle) - y * Math.sin(angle);
+                const newY = x * Math.sin(angle) + y * Math.cos(angle);
+                return [newX, newY];
+            });
+            target.coordinate = newCoordinateVector.map(vector => {
+                return [vector[0] + centerX, vector[1] + centerY];
+            });
+        }
+
+        // 画出该sprite
+        draw(ctx) {
+
+            const sprite = this;// 获取到当前sprite
+
+            // TODO 这边更改掉
+            // console.log("==============");
+            // console.log("sprite");
+            // console.log(sprite.id);
+            console.log(sprite);
+            // console.log("sprite");
+            // console.log("==============");
+            ctx.save();
+            const [x, y] = sprite.pos;
+            const [width, height] = sprite.size;
+            ctx.beginPath();// beginPath() 方法开始一条路径，或重置当前的路径。
+
+            if (this.rotateAngle !== 0) {
+                const centerX = x + width / 2;
+                const centerY = y + height / 2;
+                ctx.translate(centerX, centerY);
+                ctx.rotate(this.rotateAngle);
+                ctx.translate(-centerX, -centerY);
+            }
+
+//            ctx.rect(x, y, width, height);
+//            ctx.fillStyle = 'green';
+            ctx.font = "normal " + sprite.fontSize + "px Arial";
+            ctx.lineWidth = "1";
+            ctx.fillStyle = "black";
+            ctx.textBaseline = "middle";
+            var spanId = "spanTextAdd-" + sprite.id;
+            console.log("你好你好你好你好");
+            console.log(spanId);
+            var span = document.getElementById(spanId);
+            console.log(span);
+            if (span == null){
+                return true;
+            }
+            console.log(span.innerText);
+            console.log(span.innerText.split("\"").join(""));
+            console.log("你好好");
+            // console.log(document.getElementById(spanId).innerHTML);
+            ctx.fillText(span.innerText.split("\"").join(""), x, y + width / 4);
+            ctx.restore();
+            this.drawIcon(ctx, sprite.delIcon);// 绘制删除Icon
+            this.drawIcon(ctx, sprite.rotateIcon);// 绘制旋转Icon
+            this.drawIcon(ctx, sprite.scaleIcon);// 绘制尺寸Icon
+
+        }
+
+        /**
+         * 画出该sprite对应的按钮icon
+         * param ctx
+         * param icon
+         */
+        drawIcon(ctx, icon) {
+            ctx.beginPath();
+            ctx.save();
+            const [x, y] = icon.pos;
+            const [width, height] = icon.size;
+
+            if (this.rotateAngle !== 0) {
+                const [spriteX, spriteY] = this.pos;
+                const [spriteW, spriteH] = this.size;
+                const centerX = spriteX + spriteW / 2;
+                const centerY = spriteY + spriteH / 2;
+                ctx.translate(centerX, centerY);
+                ctx.rotate(this.rotateAngle);
+                ctx.translate(-centerX, -centerY);
+            }
+
+            if (icon.self) {
+                ctx.drawImage(icon.self, x, y, width, height);
+            } else {
+                const img = new Image();
+                img.crossOrigin = "anonymous";
+                img.src = icon.url;
+                img.onload = function () {
+                    icon.self = img;
+                    ctx.drawImage(img, x, y, width, height);
+                }
+            }
+            ctx.restore();
+        }
+
+        /**
+         * 对sprite进行初始化
+         */
+        init() {
+            this.initDelIcon();// 初始化删除按钮，左下角
+            this.initRotateIcon();// 初始化旋转按钮，左上角
+            this.initScaleIcon();// 初始化缩放按钮，右上角
+        }
+
+        /**
+         * init()
+         * 初始化删除按钮，左下角
+         */
+        initDelIcon() {
+            const [width, height] = this.size;
+            const [x, y] = this.pos;
+            this.delIcon = {
+                ...this.delIcon,
+                pos: [x - BOX_PADDING - ICON_HEIGHT * 0.5, y + height + BOX_PADDING - ICON_HEIGHT * 0.5],
+                size: [ICON_HEIGHT, ICON_HEIGHT],
+                url: DEL_ICON,
+                parent: this
+            };
+            this.delIcon.coordinate = this.setCoordinate(this.delIcon.pos, this.delIcon.size);// 设置四个顶点的初始化坐标
+        }
+
+        /**
+         * init()
+         * 初始化缩放按钮，右上角
+         */
+        initScaleIcon() {
+            const [width, height] = this.size;
+            const [x, y] = this.pos;
+            this.scaleIcon = {
+                ...this.scaleIcon,
+                pos: [x + width + BOX_PADDING - ICON_HEIGHT * 0.5, y - BOX_PADDING - ICON_HEIGHT * 0.5],
+                size: [ICON_HEIGHT, ICON_HEIGHT],
+                url: SCALE_ICON,
+                parent: this
+            };
+
+            this.scaleIcon.coordinate = this.setCoordinate(this.scaleIcon.pos, this.scaleIcon.size);// 设置四个顶点的初始化坐标
+        }
+
+        /**
+         * init()
+         * 初始化旋转按钮，左上角
+         */
+        initRotateIcon() {
+            const [width, height] = this.size;
+            const [x, y] = this.pos;
+            this.rotateIcon = {
+                ...this.rotateIcon,
+                pos: [x - BOX_PADDING - ICON_HEIGHT * 0.5, y - BOX_PADDING - ICON_HEIGHT * 0.5],
+                size: [ICON_HEIGHT, ICON_HEIGHT],
+                url: ROTATE_ICON,
+                parent: this
+            };
+            // const point = this.coordinate[0];
+            // this.rotateIcon.coordinate = this.setIconCoordinate([point[0] - BOX_PADDING, point[1] - BOX_PADDING]);
+            this.rotateIcon.coordinate = this.setCoordinate(this.rotateIcon.pos, this.rotateIcon.size);
+        }
+
+        /**
+         * 重置icon的位置与大小
+         */
+        resetIconPos() {
+            const [width, height] = this.size;
+            const [x, y] = this.pos;
+            this.rotateIcon = {
+                ...this.rotateIcon,
+                pos: [x - BOX_PADDING - ICON_HEIGHT * 0.5, y - BOX_PADDING - ICON_HEIGHT * 0.5],
+                size: [ICON_HEIGHT, ICON_HEIGHT]
+            };
+            this.scaleIcon = {
+                ...this.scaleIcon,
+                pos: [x + width + BOX_PADDING - ICON_HEIGHT * 0.5, y - BOX_PADDING - ICON_HEIGHT * 0.5],
+                size: [ICON_HEIGHT, ICON_HEIGHT]
+            };
+            this.delIcon = {
+                ...this.delIcon,
+                pos: [x - BOX_PADDING - ICON_HEIGHT * 0.5, y + height + BOX_PADDING - ICON_HEIGHT * 0.5],
+                size: [ICON_HEIGHT, ICON_HEIGHT]
+            };
+        }
+
+        /**
+         * 根据移动的距离重置sprite所有部分的位置
+         * param dirX
+         * param dirY
+         */
+        resetPos(dirX, dirY) {
+            const [oX, oY] = this.pos;
+            this.pos = [oX + dirX, oY + dirY];
+            this.center = [this.center[0] + dirX, this.center[1] + dirY];
+
+            // 更新四个顶点的坐标
+            this.coordinate = this.coordinate.map(point => {
+                return [point[0] + dirX, point[1] + dirY];
+            });
+
+            if (this.delIcon) {
+                const [x, y] = this.delIcon.pos;
+                this.delIcon.pos = [x + dirX, y + dirY];
+                this.delIcon.coordinate = this.delIcon.coordinate.map(point => {
+                    return [point[0] + dirX, point[1] + dirY];
+                });
+            }
+            if (this.scaleIcon) {
+                const [x, y] = this.scaleIcon.pos;
+                this.scaleIcon.pos = [x + dirX, y + dirY];
+                this.scaleIcon.coordinate = this.scaleIcon.coordinate.map(point => {
+                    return [point[0] + dirX, point[1] + dirY];
+                });
+            }
+            if (this.rotateIcon) {
+                const [x, y] = this.rotateIcon.pos;
+                this.rotateIcon.pos = [x + dirX, y + dirY];
+                this.rotateIcon.coordinate = this.rotateIcon.coordinate.map(point => {
+                    return [point[0] + dirX, point[1] + dirY];
+                });
+            }
+        }
+
+        /**
+         * 根据触摸点移动的距离计算缩放比，并重置sprite的尺寸
+         * param dir
+         */
+        resetSize(dir) {
+            // 获取当前sprite相关数据
+            const sprite = this;// 获取当前sprite
+            const [oWidth, oHeight] = sprite.size;// 当前sprite尺寸
+            this.scalePercent = (oWidth + dir) / oWidth; // 使用x轴的长度来确定缩放的比例
+            const [minWidth, minHeight] = sprite.minSize;// 最小尺寸
+            const [maxWidth, maxHeight] = sprite.maxSize;// 最大尺寸
+            const [centerX, centerY] = sprite.center;// 中心位置
+
+            //
+            let width = oWidth * this.scalePercent;// 宽度新尺寸
+            let height = oHeight * this.scalePercent;// 高度新尺寸
+            // 新尺寸控制
+            width < minWidth && (width = minWidth);
+            height < minHeight && (height = minHeight);
+            width > maxWidth && (width = maxWidth);
+            height > maxHeight && (height = maxHeight);
+
+            const x = centerX - width / 2;
+            const y = centerY - height / 2;
+            sprite.pos = [x, y];
+            sprite.size = [width, height];
+            // 字体大小
+            let fontSize = sprite.fontSize;
+            sprite.fontSize = fontSize * this.scalePercent;
+            // 文字
+            // let text = sprite.text;
+            // sprite.text = sprite.text;
+            console.log("$$$$$$$$$$$$");
+            console.log(sprite);
+
+            sprite.resetIconPos();
+        }
+
+        /**
+         * 设置sprite的旋转角度
+         * param angleDir
+         */
+        setRotateAngle(angleDir) {
+            this.rotateAngle += angleDir;
+            this.rotateAngleDir += angleDir;
+        }
+
+    }
+
+    /************************************ Sprite的方法 *************************************/
+
+
+
+
+    const BOX_PADDING = 10;
+    const ICON_HEIGHT = 20;
+    const ROTATE_ICON =
+        'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAA70lEQVQ4T7XTL0vDURTG8c80aJVhEWx2u2AyTYNonmAwGi2Cgth8AWNBgzYZLKmwMJhYLL4Io9hFDP7hyJ2My+/nlLHTzj3P/d5znntvxYhRGXG/sQGWsI1nfGIGD7hI+U/jRR0c4QmneE/KSRxgFruDY+eAFSwjIEVxgkc0+8UccIcaXkoAE7hJmm/JIKCKM2wMuZku1vCWA6bQwvoQQAer+MgBkfdS8TWDzGMTDVyVjRB7trCIvQwQa3VMo43bMhPDk2MsYD85HtoAXOMch79dY78WRsaJc9hJD+oS8R4iAn5f5MG/v8bY/sKfO/kCL2skEWR80iIAAAAASUVORK5CYII=';
+    const DEL_ICON =
+        'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAABIUlEQVRYR+3VPUvEQBSF4WdLsRdBQQsrURErC/31CtoJfiDICooigr22cnEDYdGdO5tgmqQJITNz3jn3zpmJgZ/JwPpGgNGB0YGsAzt4w2fy2K5iHY+l8RmAXdzhFad4Kiy6jTNsYh+3i8ZnAFZwjXChBNEWn+IAX10BYn7YeYmtBRBt8Wcc472PEjRrhKXnf0DMi5/MQEv61VH8G0SINDWPnafFY2KmB+Z30YYIwXiiNNXiywLEvIC4mL3jeynxrgBNP/w7wKAlyDRh6vg1jVXThNljGAEUiVnMgJoeqA2iNETGgdoojtMRwA847COK93CTuAeassadEcEUEHGR3fdxFxzhBR/FbP0ZsIYNXJXGZ0pQWqPT/xFgdGB0YHAHvgG1jEwhcd+TtgAAAABJRU5ErkJggg==';
+    const SCALE_ICON =
+        'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAABJElEQVRYR+3UPS8EURTG8d82GolE0NArlT6ARqEiChrRKXTUWqUtJSpCQoNKlEqlL6CloJB4aVRyky2QnZk7szOzzb3NFPPkPP/z3HNux5BPZ8j+EkBKICVQJYExnCF8s84D9vFatOZVAXYKCq9iGvN4zNNWAShqaglXeMItttsEWMY5NrGASawMCjCOb3wVtB7ML7CGaxzVBXCKF+zmAPw3D9LaAEI3AWArA6CfeWsAWeatAOSZNw4QBu0Y672B63c7jc1AMD/prddNzmB2MYGNQdfw9xDGmgfPUYzgrS6Au8jOi17KP/9jnuJDLGImIvZS5kEcAzCLezzjssDhAO9lKGIAQr0p7GEup/hnbys+mgAoU7OUNjaBUkXLiBNASiAl8AO7pD8h3UM4owAAAABJRU5ErkJggg==';
+
+    /**
+     * 页面加载
+     */
+    window.onload = function () {
+
+        const stage = new Stage({
+            canvas: document.querySelector('canvas')
+        });
+        var text = "请输入内容";
+        document.querySelector('.add-word').addEventListener('click', function () {
+
+            const randomX = Math.floor(Math.random() * 200);// 随机X坐标
+            const randomY = Math.floor(Math.random() * 200);// 随机Y坐标
+            const sprite = new Sprite({// 新建canvas内元素
+                pos: [randomX, randomY],
+                size: [120, 60],
+                minSize: [40, 20],
+                maxSize: [240, 120],
+                text: text,// 这边的文字有点问题
+                fontSize: "30"// 默认文字尺寸
+            });
+            stage.append(sprite);// 添加canvas
+            console.log(sprite.id);
+            console.log(sprite);
+
+            // 后添加的页面设置文字
+            let spanHtml = '<span id="spanTextAdd-' + sprite.id + '" contenteditable="true" style="display: block;">"' + text + '"</span>'
+            document.getElementById("edit-word").innerHTML += spanHtml;
+        });
+
+        // 图片选择器
+        var result = document.getElementById("result");
+        var input = document.getElementById("file_input");
+
+        if (typeof FileReader === 'undefined') {
+            result.innerHTML = "抱歉，你的浏览器不支持 FileReader";
+            input.setAttribute('disabled', 'disabled');
+        } else {
+            input.addEventListener('change', readFile, false);
+        }
+
+        function readFile() {
+            var file = this.files[0];
+            if (!/image\/\w+/.test(file.type)) {
+                alert("文件必须为图片！");
+                return false;
+            }
+            var reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = function (e) {
+                result.innerHTML = '<img src="' + this.result + '" alt=""/>'
+            }
+        }
+
+    }
+</script>
+
+</html>
+@}
