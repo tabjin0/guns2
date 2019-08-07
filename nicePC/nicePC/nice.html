@@ -37,9 +37,9 @@
 <div class="container">
     <div class="canvas-container">
         <!-- 背景canvas -->
-        <canvas width="800" height="480">抱歉，你的浏览器不支持Canvas</canvas>
+        <canvas id="bg-canvas" width="800" height="480" style="display: block;margin: 0 auto;border: 1px solid #aaa">抱歉，你的浏览器不支持Canvas</canvas>
         <!-- 文字这边就当做离屏canvas -->
-        <canvas width="800" height="480">抱歉，你的浏览器不支持Canvas</canvas>
+        <canvas id="canvas" width="800" height="480" style="display: block;margin: 0 auto;border: 1px solid #aaa">抱歉，你的浏览器不支持Canvas</canvas>
     </div>
     <div>
         <div class="box-container">
@@ -93,14 +93,10 @@
     window.onload = function () {
 
         const stage = new Stage({
-            canvas: document.querySelector('canvas')
+            bgCanvas: document.getElementById("bg-canvas"),
+            canvas: document.getElementById("canvas")
         });
-        // var ctx = stage.canvas.getContext('2d');
-        // var backgroundImg = new Image();
-        // backgroundImg.src = "C:\\Users\\tabjin\\Desktop\\微信图片_20180903230729.jpg";
-        // backgroundImg.onload = function() {
-        //     ctx.drawImage(backgroundImg, 0, 0);
-        // }
+
         var text = "请输入内容";
         document.querySelector('.add-word').addEventListener('click', function () {
 
@@ -114,7 +110,7 @@
                 text: text,// 这边的文字有点问题
                 fontSize: "30"// 默认文字尺寸
             });
-            stage.append(sprite);// 添加canvas
+            stage.append(sprite);// 添加sprite
             console.log(sprite.id);
             console.log(sprite);
 
@@ -147,6 +143,14 @@
             }
         }
 
+        var bgCanvas = document.getElementById('bg-canvas');// 获取canvas对象
+        var bgContext = bgCanvas.getContext('2d');// 获得绘图的上下文环境
+        var backgroundImg = new Image();
+        backgroundImg.src = "微信图片_20180903230729.jpg";
+        backgroundImg.onload = function() {
+            bgContext.drawImage(backgroundImg, 0, 0);
+            // bgContext.drawImage(stage.canvas, 0, 0);
+        }
     }
 </script>
 

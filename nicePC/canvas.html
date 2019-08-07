@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>canvas</title>
+</head>
+<body>
+<canvas id="canvas" style="display: block;margin: 0 auto;border: 1px solid #aaa">你的浏览器不支持canvas</canvas>
+<canvas id="watermark-canvas" style="display: block;margin: 0 auto;border: 1px solid #aaa">你的浏览器不支持canvas</canvas>
+<script>
+    var canvas = document.getElementById('canvas');// 获取canvas对象
+    var ctx = canvas.getContext('2d');// 获得绘图的上下文环境
+    var watermarkCanvas = document.getElementById('watermark-canvas');// 获取canvas对象
+    var watermarkCtx = watermarkCanvas.getContext('2d');// 获得绘图的上下文环境
+
+    var image = new Image();// 创建图片对象
+
+    window.onload = function () {
+        canvas.width = 800;
+        canvas.height = 480;
+
+        image.src = "背景图.jpg";
+        image.onload = function () {// 当图片读取完毕之后
+            ctx.drawImage(image, 600, 200, 400, 400, 0, 0, canvas.width, canvas.height);// 将原图像(600,200)位置开始，宽和高分别为400、400的图像渲染到canvas画布上从(0, 0)位置开始铺满画布
+            ctx.drawImage(watermarkCanvas, 0, 0);
+        }
+
+        // 水印
+        watermarkCanvas.width = 600;
+        watermarkCanvas.height = 100;
+
+        watermarkCanvas.font = "bold 50px Arial";
+        watermarkCanvas.lineWidth = "1";
+        watermarkCanvas.fillStyle = "black";
+        watermarkCanvas.textBaseline = "middle";
+        watermarkCanvas.fillText("你好啊", 20, 50);
+
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width,)
+        }
+    }
+</script>
+</body>
+</html>

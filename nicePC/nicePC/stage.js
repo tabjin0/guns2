@@ -6,9 +6,11 @@
 class Stage {
 
     constructor(props) {
-
+        this.bgCanvas = props.bgCanvas;
+        this.bgCtx = this.bgCanvas.getContext('2d');
         this.canvas = props.canvas;
         this.ctx = this.canvas.getContext('2d');
+
 
         // 用一个数组来保存canvas中的元素。每一个元素都是一个Sprite类的实例。
         this.spriteList = [];
@@ -376,24 +378,10 @@ class Stage {
      */
     drawSprite() {
         this.clearStage();// 先清除
+        this.bgCtx.drawImage(this.ctx, 0 ,0);
         this.spriteList.forEach(item => {
             item.draw(this.ctx);
         });
-    }
-
-    drawBackground(sprite) {
-        console.log("十九大绝对路径爱上了咖啡进口量撒酒疯");
-        var bg_image_src = document.getElementById('bg-img').src;
-        if (bg_image_src == null)
-            return ture;
-        console.log(bg_image_src);
-        console.log(ctx);
-        var bg_image = new Image();
-        bg_image.src = bg_image_src;
-        bg_image.onload = function () {
-            ctx.drawImage(bg_image, 0, 0);
-        }
-        ctx.save();
     }
 
     /**
