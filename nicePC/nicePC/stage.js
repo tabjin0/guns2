@@ -11,6 +11,7 @@ class Stage {
         this.canvas = props.canvas;
         this.ctx = this.canvas.getContext('2d');
 
+        this.backgroundImg = props.backgroundImg;
 
         // 用一个数组来保存canvas中的元素。每一个元素都是一个Sprite类的实例。
         this.spriteList = [];
@@ -44,7 +45,7 @@ class Stage {
         console.log("添加至列表");
         console.log("打印spriteList列表");
         console.log(this.spriteList);// Array[]  0: Object { id: 1562120734373, text: "niubi", color: undefined, … }
-        console.log(this.spriteList[0]);
+        // console.log(this.spriteList[0]);
         this.drawSprite();
     }
 
@@ -227,7 +228,7 @@ class Stage {
      */
     reCalSpriteSize(sprite, touchX, touchY) {
         console.log("reCalSpriteSize");
-        console.log(sprite);
+        // console.log(sprite);
         // 使用X轴方向作为缩放比例的判断标准
         const [centerX, centerY] = sprite.center;// 获得当前sprite的中心坐标
         const startVector = [this.scaleStartX - centerX, this.scaleStartY - centerY];
@@ -287,8 +288,8 @@ class Stage {
      * 判断是否touch在了sprite中的某一部分上，返回这个sprite
      */
     getTouchTargetOfSprite({ touchX, touchY }, part) {
-        console.log("part");
-        console.log(part);
+        // console.log("part");
+        // console.log(part);
         return this.spriteList.reduce((sum, sprite) => {
             // 判断是否在在某个sprite中移动。当前默认所有的sprite都是长方形的。
             if (this.checkIfTouchIn({ touchX, touchY }, sprite[part])) {
@@ -378,10 +379,12 @@ class Stage {
      */
     drawSprite() {
         this.clearStage();// 先清除
-        this.bgCtx.drawImage(this.ctx, 0 ,0);
+        this.bgCtx.clearRect(0, 0, this.bgCanvas.width, this.bgCanvas.height);
+        this.bgCtx.drawImage(this.backgroundImg, 0, 0, this.bgCanvas.width, this.bgCanvas.height);
         this.spriteList.forEach(item => {
             item.draw(this.ctx);
         });
+        this.bgCtx.drawImage(this.canvas, 0, 0);// 离屏canvas
     }
 
     /**

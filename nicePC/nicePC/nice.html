@@ -25,7 +25,7 @@
         .add-word {
             /*background-color: #f00;*/
             background-color: transparent;
-            margin-left: 50px;
+            margin-left: 20px;
             width: 60px;
             height: 40px;
         }
@@ -34,24 +34,20 @@
 </head>
 
 <body>
-<div class="container">
+<div class="container" style="display: flex; flex-direction: column;">
     <div class="canvas-container">
         <!-- 背景canvas -->
-        <canvas id="bg-canvas" width="800" height="480" style="display: block;margin: 0 auto;border: 1px solid #aaa">抱歉，你的浏览器不支持Canvas</canvas>
+        <canvas id="bg-canvas" width="800" height="480" style="display: block;margin: 0 auto;border: 1px solid #aaa">
+            抱歉，你的浏览器不支持Canvas
+        </canvas>
+
         <!-- 文字这边就当做离屏canvas -->
-        <canvas id="canvas" width="800" height="480" style="display: block;margin: 0 auto;border: 1px solid #aaa">抱歉，你的浏览器不支持Canvas</canvas>
+        <canvas id="canvas" width="800" height="480" style="display: block;margin: 0 auto;border: 1px solid #aaa">
+            抱歉，你的浏览器不支持Canvas
+        </canvas>
+
     </div>
     <div>
-        <div class="box-container">
-            <button class="add-word" style="width: 200px;">添加文字</button>
-            <!--<span class="red-box" contenteditable="true"></span>-->
-        </div>
-
-        <!--  颜色选择器  -->
-        <div>
-            颜色: <input class="jscolor" value="ab2567">
-        </div>
-
         <!--  图片选择器  -->
         <div>
             <p>
@@ -60,12 +56,22 @@
             </p>
             <div id="result"></div>
         </div>
+
+
+        <!--  颜色选择器  -->
+        <div>
+            颜色: <input id="colorSelect" class="jscolor" value="ab2567">
+        </div>
+        <div class="box-container">
+            <button class="add-word" style="width: 100px;">添加文字</button>
+            <button class="upload-image" style="width: 100px;">上传图像</button>
+            <!--<span class="red-box" contenteditable="true"></span>-->
+        </div>
+
+        <div id="edit-word" style="display: inline-block;width: 250px;"></div>
     </div>
 
 
-    <div id="edit-word" style="display: block;">
-
-    </div>
 </div>
 </body>
 
@@ -92,34 +98,13 @@
      */
     window.onload = function () {
 
-        const stage = new Stage({
-            bgCanvas: document.getElementById("bg-canvas"),
-            canvas: document.getElementById("canvas")
-        });
 
-        var text = "请输入内容";
-        document.querySelector('.add-word').addEventListener('click', function () {
+        /* 背景canvas */
+        var bgCanvas = document.getElementById('bg-canvas');// 获取canvas对象
+        var bgCtx = bgCanvas.getContext('2d');// 获得绘图的上下文环境
+        var backgroundImg = new Image();
 
-            const randomX = Math.floor(Math.random() * 200);// 随机X坐标
-            const randomY = Math.floor(Math.random() * 200);// 随机Y坐标
-            const sprite = new Sprite({// 新建canvas内元素
-                pos: [randomX, randomY],
-                size: [120, 60],
-                minSize: [40, 20],
-                maxSize: [240, 120],
-                text: text,// 这边的文字有点问题
-                fontSize: "30"// 默认文字尺寸
-            });
-            stage.append(sprite);// 添加sprite
-            console.log(sprite.id);
-            console.log(sprite);
-
-            // 后添加的页面设置文字
-            let spanHtml = '<span id="spanTextAdd-' + sprite.id + '" contenteditable="true" style="display: block;">"' + text + '"</span>'
-            document.getElementById("edit-word").innerHTML += spanHtml;
-        });
-
-        // 图片选择器
+        /* 图像选择器 start */
         var result = document.getElementById("result");
         var input = document.getElementById("file_input");
 
@@ -140,17 +125,60 @@
             reader.readAsDataURL(file);
             reader.onload = function (e) {
                 result.innerHTML = '<img src="' + this.result + '" alt=""/>'
+                // this.result就是选取图片的base64地址
+                backgroundImg.src = this.result;
             }
+            return this.result;
         }
 
-        var bgCanvas = document.getElementById('bg-canvas');// 获取canvas对象
-        var bgContext = bgCanvas.getContext('2d');// 获得绘图的上下文环境
-        var backgroundImg = new Image();
-        backgroundImg.src = "微信图片_20180903230729.jpg";
-        backgroundImg.onload = function() {
-            bgContext.drawImage(backgroundImg, 0, 0);
-            // bgContext.drawImage(stage.canvas, 0, 0);
+        /* 图像选择器 end */
+
+        const stage = new Stage({
+            bgCanvas: document.getElementById("bg-canvas"),
+            canvas: document.getElementById("canvas"),
+            backgroundImg: backgroundImg
+        });
+
+        backgroundImg.onload = function () {
+            bgCtx.drawImage(backgroundImg, 0, 0, bgCanvas.width, bgCanvas.height);
         }
+
+        var text = "请输入内容";
+        var colorMap = new Map();
+        document.querySelector('.add-word').addEventListener('click', function () {
+
+            const randomX = Math.floor(Math.random() * 200);// 随机X坐标
+            const randomY = Math.floor(Math.random() * 200);// 随机Y坐标
+            const sprite = new Sprite({// 新建canvas内元素
+                pos: [randomX, randomY],
+                size: [120, 60],
+                minSize: [40, 20],
+                maxSize: [240, 120],
+                text: text,// 这边的文字有点问题
+                colorMap: colorMap,
+                fontSize: "30"// 默认文字尺寸
+            });
+            stage.append(sprite);// 添加sprite
+
+            // 后添加的页面设置文字
+            let spanHtml = '<span id="spanTextAdd-' + sprite.id + '" contenteditable="true">"' + text + '"</span>'
+                + '<div>颜色: <input id="inputColor-' + sprite.id + '" class="jscolor"></div>';
+            document.getElementById("edit-word").innerHTML += spanHtml;
+            colorMap.set(sprite.id, document.getElementById("colorSelect").value);
+            console.log(colorMap);
+        });
+
+        document.querySelector('.upload-image').addEventListener('click', function () {
+            var uploadCanvas = document.getElementById("bg-canvas");
+            var url = uploadCanvas.toDataURL();
+            console.log(url);
+        });
+
+        function getCanvasURL() {
+
+        }
+
+
     }
 </script>
 

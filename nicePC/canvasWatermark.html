@@ -2,8 +2,12 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>canvas</title>
-</head>
+    <title><!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <meta charset="UTF-8">
+            <title>canvas</title>
+        </head>
 <body>
 <canvas id="canvas" style="display: block;margin: 0 auto;border: 1px solid #aaa">你的浏览器不支持canvas</canvas>
 <input type="range" id="scale-range" min="0.5" max="3.0" step="0.01" value="1.0"
@@ -12,9 +16,11 @@
 <script>
     var canvas = document.getElementById('canvas');// 获取canvas对象
     var ctx = canvas.getContext('2d');// 获得绘图的上下文环境
-    // var watermarkCanvas = document.getElementById('watermark-canvas');// 获取canvas对象
-    // var watermarkCtx = watermarkCanvas.getContext('2d');// 获得绘图的上下文环境
+
     var slider = document.getElementById("scale-range");
+
+    var watermarkCanvas = document.getElementById('watermark-canvas');// 获取canvas对象
+    var watermarkCtx = watermarkCanvas.getContext('2d');// 获得绘图的上下文环境
 
     var image = new Image();// 创建图片对象
 
@@ -34,15 +40,14 @@
             }
         }
 
-        // 水印
-        // watermarkCanvas.width = 600;
-        // watermarkCanvas.height = 100;
-        //
-        // watermarkCanvas.font = "bold 50px Arial";
-        // watermarkCanvas.lineWidth = "1";
-        // watermarkCanvas.fillStyle = "black";
-        // watermarkCanvas.textBaseline = "middle";
-        // watermarkCanvas.fillText("你好啊", 20, 50);
+        // 水印绘制部分
+        watermarkCanvas.width = 600;
+        watermarkCanvas.height = 100;
+
+        watermarkCtx.font = "bold 50px Arial";
+        watermarkCtx.fillStyle = "black";
+        watermarkCtx.textBaseline = "middle";
+        watermarkCtx.fillText("你好啊", 20, 50);
 
         function drawImageByScale() {
             // ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -53,8 +58,14 @@
             var dy = canvas.height / 2 - imageHeight / 2;
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             ctx.drawImage(image, dx, dy, imageWidth, imageHeight);
+            ctx.drawImage(watermarkCanvas, 0, 0);
         }
     }
 </script>
+</body>
+</html></title>
+</head>
+<body>
+
 </body>
 </html>
