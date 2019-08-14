@@ -1,7 +1,7 @@
 package com.stylefeng.guns.core.log.factory;
 
-import com.stylefeng.guns.core.common.constant.state.LogSucceed;
 import com.stylefeng.guns.core.common.constant.state.LogType;
+import com.stylefeng.guns.core.common.constant.state.LogSucceed;
 import com.stylefeng.guns.modular.system.model.LoginLog;
 import com.stylefeng.guns.modular.system.model.OperationLog;
 

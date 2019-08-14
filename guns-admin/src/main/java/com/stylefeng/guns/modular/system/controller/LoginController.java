@@ -2,15 +2,16 @@ package com.stylefeng.guns.modular.system.controller;
 
 import com.google.code.kaptcha.Constants;
 import com.stylefeng.guns.core.base.controller.BaseController;
-import com.stylefeng.guns.core.common.exception.InvalidKaptchaException;
 import com.stylefeng.guns.core.log.LogManager;
 import com.stylefeng.guns.core.log.factory.LogTaskFactory;
 import com.stylefeng.guns.core.node.MenuNode;
 import com.stylefeng.guns.core.shiro.ShiroKit;
 import com.stylefeng.guns.core.shiro.ShiroUser;
+import com.stylefeng.guns.core.support.HttpKit;
 import com.stylefeng.guns.core.util.ApiMenuFilter;
 import com.stylefeng.guns.core.util.KaptchaUtil;
 import com.stylefeng.guns.core.util.ToolUtil;
+import com.stylefeng.guns.core.common.exception.InvalidKaptchaException;
 import com.stylefeng.guns.modular.system.model.User;
 import com.stylefeng.guns.modular.system.service.IMenuService;
 import com.stylefeng.guns.modular.system.service.IUserService;
@@ -23,8 +24,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 
 import java.util.List;
-
-import static com.stylefeng.guns.core.support.HttpKit.getIp;
 
 /**
  * 登录控制器
@@ -114,7 +113,7 @@ public class LoginController extends BaseController {
         super.getSession().setAttribute("shiroUser", shiroUser);
         super.getSession().setAttribute("username", shiroUser.getAccount());
 
-        LogManager.me().executeLog(LogTaskFactory.loginLog(shiroUser.getId(), getIp()));
+        LogManager.me().executeLog(LogTaskFactory.loginLog(shiroUser.getId(), HttpKit.getIp()));
 
         ShiroKit.getSession().setAttribute("sessionFlag", true);
 
@@ -126,7 +125,7 @@ public class LoginController extends BaseController {
      */
     @RequestMapping(value = "/logout", method = RequestMethod.GET)
     public String logOut() {
-        LogManager.me().executeLog(LogTaskFactory.exitLog(ShiroKit.getUser().getId(), getIp()));
+        LogManager.me().executeLog(LogTaskFactory.exitLog(ShiroKit.getUser().getId(), HttpKit.getIp()));
         ShiroKit.getSubject().logout();
         return REDIRECT + "/login";
     }

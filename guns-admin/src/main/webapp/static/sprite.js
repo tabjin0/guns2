@@ -11,7 +11,7 @@ class Sprite {
         this.id = Date.now() + Math.floor(Math.random() * 10);
 
         this.text = props.text;
-        this.color = props.color;
+        this.colorMap = props.colorMap;
         this.fontSize = props.fontSize;
         this.font = props.font;
 
@@ -35,6 +35,7 @@ class Sprite {
 
         this.scalePercent = 1; // 一共缩放的比例
         this.parent = this;
+        this.show_level = props.show_level;
 
         this.init();
     }
@@ -114,10 +115,10 @@ class Sprite {
     getIconCoordinateByIconCenter(center) {
         const [x, y] = center;
         return [
-            [x - ICON_HEIGHT / 2, y - ICON_HEIGHT / 2],
-            [x + ICON_HEIGHT / 2, y - ICON_HEIGHT / 2],
-            [x - ICON_HEIGHT / 2, y + ICON_HEIGHT / 2],
-            [x + ICON_HEIGHT / 2, y + ICON_HEIGHT / 2]
+            [x - ICON_HEIGHT / 2, y - ICON_HEIGHT / 2],// 左上角
+            [x + ICON_HEIGHT / 2, y - ICON_HEIGHT / 2],// 右上角
+            [x - ICON_HEIGHT / 2, y + ICON_HEIGHT / 2],// 左下角
+            [x + ICON_HEIGHT / 2, y + ICON_HEIGHT / 2]// 右下角
         ];
     }
 
@@ -178,18 +179,10 @@ class Sprite {
         });
     }
 
-    // 画出该sprite
+    // 绘制该ctx
     draw(ctx) {
-
         const sprite = this;// 获取到当前sprite
 
-        // TODO 这边更改掉
-        // console.log("==============");
-        // console.log("sprite");
-        // console.log(sprite.id);
-        console.log(sprite);
-        // console.log("sprite");
-        // console.log("==============");
         ctx.save();
         const [x, y] = sprite.pos;
         const [width, height] = sprite.size;
@@ -203,25 +196,29 @@ class Sprite {
             ctx.translate(-centerX, -centerY);
         }
 
-//            ctx.rect(x, y, width, height);
-//            ctx.fillStyle = 'green';
         ctx.font = "normal " + sprite.fontSize + "px Arial";
         ctx.lineWidth = "1";
-        ctx.fillStyle = "black";
-        ctx.textBaseline = "middle";
-        var spanId = "spanTextAdd-" + sprite.id;
-        console.log("你好你好你好你好");
-        console.log(spanId);
-        var span = document.getElementById(spanId);
-        console.log(span);
-        if (span == null){
+        // 颜色
+        console.log(sprite.colorMap);
+        var inputColorId = "inputColor-" + sprite.id;
+        var inputColor = document.getElementById(inputColorId);
+        // var colorSelect = document.getElementById("colorSelect").value;
+        // console.log(colorSelect);
+        // console.log(inputColor);
+        if(inputColor == null) {
             return true;
         }
-        console.log(span.innerText);
-        console.log(span.innerText.split("\"").join(""));
-        console.log("你好好");
-        // console.log(document.getElementById(spanId).innerHTML);
-        ctx.fillText(span.innerText.split("\"").join(""), x, y + width / 4);
+        inputColor.setAttribute('value', sprite.colorMap.get(sprite.id));
+        console.log(inputColor.value);
+        ctx.fillStyle = "#" + inputColor.value;
+        // ctx.fillStyle = "black";
+        ctx.textBaseline = "middle";
+        var textSpanId = "spanTextAdd-" + sprite.id;
+        var textSpan = document.getElementById(textSpanId);
+        if (textSpan == null) {
+            return true;
+        }
+        ctx.fillText(textSpan.innerText.split("\"").join(""), x, y + width / 4);
         ctx.restore();
         this.drawIcon(ctx, sprite.delIcon);// 绘制删除Icon
         this.drawIcon(ctx, sprite.rotateIcon);// 绘制旋转Icon
@@ -296,7 +293,7 @@ class Sprite {
      */
     initScaleIcon() {
         const [width, height] = this.size;
-        const [x, y] = this.pos;
+        const [x, y] = this.pos;// 初始化的时候随机获取
         this.scaleIcon = {
             ...this.scaleIcon,
             pos: [x + width + BOX_PADDING - ICON_HEIGHT * 0.5, y - BOX_PADDING - ICON_HEIGHT * 0.5],
@@ -322,8 +319,6 @@ class Sprite {
             url: ROTATE_ICON,
             parent: this
         };
-        // const point = this.coordinate[0];
-        // this.rotateIcon.coordinate = this.setIconCoordinate([point[0] - BOX_PADDING, point[1] - BOX_PADDING]);
         this.rotateIcon.coordinate = this.setCoordinate(this.rotateIcon.pos, this.rotateIcon.size);
     }
 
@@ -417,12 +412,6 @@ class Sprite {
         // 字体大小
         let fontSize = sprite.fontSize;
         sprite.fontSize = fontSize * this.scalePercent;
-        // 文字
-        // let text = sprite.text;
-        // sprite.text = sprite.text;
-        console.log("$$$$$$$$$$$$");
-        console.log(sprite);
-
         sprite.resetIconPos();
     }
 

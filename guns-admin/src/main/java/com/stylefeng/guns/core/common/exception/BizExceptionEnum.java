@@ -7,7 +7,7 @@ import com.stylefeng.guns.core.exception.ServiceExceptionEnum;
  * @author fengshuonan
  * @date 2016年11月12日 下午5:04:51
  */
-public enum BizExceptionEnum implements ServiceExceptionEnum{
+public enum BizExceptionEnum implements ServiceExceptionEnum {
 
 	/**
 	 * 字典

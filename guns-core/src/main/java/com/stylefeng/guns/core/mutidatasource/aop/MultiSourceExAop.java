@@ -1,7 +1,7 @@
 package com.stylefeng.guns.core.mutidatasource.aop;
 
-import com.stylefeng.guns.core.mutidatasource.DataSourceContextHolder;
 import com.stylefeng.guns.core.mutidatasource.annotion.DataSource;
+import com.stylefeng.guns.core.mutidatasource.DataSourceContextHolder;
 import com.stylefeng.guns.core.mutidatasource.config.MutiDataSourceProperties;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.Signature;
