@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>canvas</title>
+</head>
+<body>
+<canvas id="canvas" style="display: block;margin: 0 auto;border: 1px solid #aaa">你的浏览器不支持canvas</canvas>
+<input type="range" id="scale-range" min="0.5" max="3.0" step="0.01" value="1.0"
+       style="display: block;margin: 20px auto;">
+<canvas id="watermark-canvas" style="display: block;margin: 0 auto;border: 1px solid #aaa">你的浏览器不支持canvas</canvas>
+<script>
+    var canvas = document.getElementById('canvas');// 获取canvas对象
+    var ctx = canvas.getContext('2d');// 获得绘图的上下文环境
+    // var watermarkCanvas = document.getElementById('watermark-canvas');// 获取canvas对象
+    // var watermarkCtx = watermarkCanvas.getContext('2d');// 获得绘图的上下文环境
+    var slider = document.getElementById("scale-range");
+
+    var image = new Image();// 创建图片对象
+
+    window.onload = function () {
+        canvas.width = 800;
+        canvas.height = 480;
+
+        var scale = slider.value;
+        image.src = "背景图.jpg";
+        image.onload = function () {// 当图片读取完毕之后
+            // ctx.drawImage(image, 0, 0, canvas.width, canvas.height);// 将原图像(600,200)位置开始，宽和高分别为400、400的图像渲染到canvas画布上从(0, 0)位置开始铺满画布
+            // ctx.drawImage(watermarkCanvas, 0, 0);
+            drawImageByScale(scale);
+            slider.onmousemove = function () {
+                scale = slider.value;
+                drawImageByScale(scale);
+            }
+        }
+
+        // 水印
+        // watermarkCanvas.width = 600;
+        // watermarkCanvas.height = 100;
+        //
+        // watermarkCanvas.font = "bold 50px Arial";
+        // watermarkCanvas.lineWidth = "1";
+        // watermarkCanvas.fillStyle = "black";
+        // watermarkCanvas.textBaseline = "middle";
+        // watermarkCanvas.fillText("你好啊", 20, 50);
+
+        function drawImageByScale() {
+            // ctx.clearRect(0, 0, canvas.width, canvas.height);
+            var imageWidth = canvas.width * scale;
+            var imageHeight = canvas.height * scale;
+
+            var dx = canvas.width / 2 - imageWidth / 2;
+            var dy = canvas.height / 2 - imageHeight / 2;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.drawImage(image, dx, dy, imageWidth, imageHeight);
+        }
+    }
+</script>
+</body>
+</html>
