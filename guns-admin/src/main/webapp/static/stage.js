@@ -45,7 +45,6 @@ class Stage {
         console.log("添加至列表");
         console.log("打印spriteList列表");
         console.log(this.spriteList);// Array[]  0: Object { id: 1562120734373, text: "niubi", color: undefined, … }
-        // console.log(this.spriteList[0]);
         this.drawSprite();
     }
 
@@ -380,7 +379,9 @@ class Stage {
     drawSprite() {
         this.clearStage();// 先清除
         this.bgCtx.clearRect(0, 0, this.bgCanvas.width, this.bgCanvas.height);
+        // 绘制背景
         this.bgCtx.drawImage(this.backgroundImg, 0, 0, this.bgCanvas.width, this.bgCanvas.height);
+        // 绘制文字
         this.spriteList.forEach(item => {
             item.draw(this.ctx);
         });

@@ -184,8 +184,8 @@ class Sprite {
         const sprite = this;// 获取到当前sprite
 
         ctx.save();
-        const [x, y] = sprite.pos;
-        const [width, height] = sprite.size;
+        const [x, y] = sprite.pos;// 当前sprite的位置
+        const [width, height] = sprite.size;// 当前sprite的尺寸
         ctx.beginPath();// beginPath() 方法开始一条路径，或重置当前的路径。
 
         if (this.rotateAngle !== 0) {
@@ -199,20 +199,28 @@ class Sprite {
         ctx.font = "normal " + sprite.fontSize + "px Arial";
         ctx.lineWidth = "1";
         // 颜色
+        console.log("colorMap**************************************");
         console.log(sprite.colorMap);
+
         var inputColorId = "inputColor-" + sprite.id;
-        var inputColor = document.getElementById(inputColorId);
+        var inputColorEach = document.getElementById(inputColorId);
         // var colorSelect = document.getElementById("colorSelect").value;
         // console.log(colorSelect);
         // console.log(inputColor);
-        if(inputColor == null) {
+        if(inputColorEach == null) {
             return true;
         }
-        inputColor.setAttribute('value', sprite.colorMap.get(sprite.id));
-        console.log(inputColor.value);
-        ctx.fillStyle = "#" + inputColor.value;
+        inputColorEach.setAttribute('value', sprite.colorMap.get(sprite.id));//
+
+
+        console.log(inputColorEach.value);
+        // 监听颜色框颜色，刷新colorMap
+        sprite.colorMap.set(sprite.id, inputColorEach.value);
+
+        ctx.fillStyle = "#" + inputColorEach.value;
         // ctx.fillStyle = "black";
         ctx.textBaseline = "middle";
+        // 文字
         var textSpanId = "spanTextAdd-" + sprite.id;
         var textSpan = document.getElementById(textSpanId);
         if (textSpan == null) {
