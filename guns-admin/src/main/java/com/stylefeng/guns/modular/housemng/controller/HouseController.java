@@ -35,7 +35,7 @@ public class HouseController extends BaseController {
      */
     @RequestMapping("")
     public String index() {
-        return PREFIX + "house.html";
+        return PREFIX + "house_list.html";
     }
 
     /**
@@ -43,7 +43,7 @@ public class HouseController extends BaseController {
      */
     @RequestMapping("/house_add")
     public String houseAdd() {
-        return PREFIX + "house_add.html";
+        return PREFIX + "house.html";
     }
 
     /**

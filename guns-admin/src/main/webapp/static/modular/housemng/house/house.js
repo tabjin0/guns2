@@ -14,11 +14,11 @@ var House = {
 House.initColumn = function () {
     return [
         {field: 'selectItem', radio: true},
-            {title: '房屋编号', field: 'id', visible: true, align: 'center', valign: 'middle'},
-            {title: '业主名称', field: 'user', visible: true, align: 'center', valign: 'middle'},
-            {title: '房屋地址', field: 'address', visible: true, align: 'center', valign: 'middle'},
-            {title: '房屋交付时间', field: 'date', visible: true, align: 'center', valign: 'middle'},
-            {title: '房屋描述', field: 'desc', visible: true, align: 'center', valign: 'middle'}
+        {title: '编号', field: 'id', visible: true, align: 'center', valign: 'middle'},
+        {title: '名称', field: 'user', visible: true, align: 'center', valign: 'middle'},
+        {title: '地址', field: 'address', visible: true, align: 'center', valign: 'middle'},
+        {title: '时间', field: 'date', visible: true, align: 'center', valign: 'middle'},
+        {title: '描述', field: 'desc', visible: true, align: 'center', valign: 'middle'}
     ];
 };
 
@@ -27,10 +27,10 @@ House.initColumn = function () {
  */
 House.check = function () {
     var selected = $('#' + this.id).bootstrapTable('getSelections');
-    if(selected.length == 0){
+    if (selected.length == 0) {
         Feng.info("请先选中表格中的某一记录！");
         return false;
-    }else{
+    } else {
         House.seItem = selected[0];
         return true;
     }
@@ -40,15 +40,16 @@ House.check = function () {
  * 点击添加房屋管理
  */
 House.openAddHouse = function () {
-    var index = layer.open({
-        type: 2,
-        title: '添加房屋管理',
-        area: ['800px', '420px'], //宽高
-        fix: false, //不固定
-        maxmin: true,
-        content: Feng.ctxPath + '/house/house_add'
-    });
-    this.layerIndex = index;
+    window.location.href = Feng.ctxPath + "/house/house_add";
+    // var index = layer.open({
+    //     type: 2,
+    //     title: '添加房屋管理',
+    //     // area: ['800px', '420px'], //宽高
+    //     fix: false, //不固定
+    //     maxmin: true,
+    //     content: Feng.ctxPath + '/house/house_add'
+    // });
+    // this.layerIndex = index;
 };
 
 /**
@@ -79,7 +80,7 @@ House.delete = function () {
         }, function (data) {
             Feng.error("删除失败!" + data.responseJSON.message + "!");
         });
-        ajax.set("houseId",this.seItem.id);
+        ajax.set("houseId", this.seItem.id);
         ajax.start();
     }
 };

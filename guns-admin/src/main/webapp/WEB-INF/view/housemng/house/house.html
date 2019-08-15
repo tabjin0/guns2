@@ -9,14 +9,17 @@
     <style type="text/css">
         .container {
             display: flex;
-            flex-direction: row;
+            flex-direction: column;
+            padding: 0;
         }
 
         .canvas-container {
             border: 1px solid #aaa;
             width: 800px;
             height: 480px;
-            margin: 0 auto;
+            /*margin: 0 auto;*/
+            display: flex;
+            flex-direction: column;
         }
 
         .box-container {
@@ -39,42 +42,53 @@
 </head>
 
 <body>
-<div class="container" style="display: flex; flex-direction: column;">
+<div class="container">
+
+
     <div class="canvas-container">
-        <!-- 背景canvas -->
-        <canvas id="bg-canvas" width="800" height="480" style="display: block;margin: 0 auto;border: 1px solid #aaa">
-            抱歉，你的浏览器不支持Canvas
-        </canvas>
 
-        <!-- 文字这边就当做离屏canvas -->
-        <canvas id="canvas" width="800" height="480" style="display: block;margin: 0 auto;border: 1px solid #aaa">
-            抱歉，你的浏览器不支持Canvas
-        </canvas>
+        <div style="display: flex;flex-direction: row;">
+            <div>
+                <!-- 背景canvas -->
+                <canvas id="bg-canvas" width="800" height="480"
+                        style="display: block;margin: 0 auto;border: 1px solid #aaa">
+                    抱歉，你的浏览器不支持Canvas
+                </canvas>
+            </div>
 
-    </div>
+            <div style="width: 600px;">
+                <!--  图片选择器  -->
+                <div>
+                    <p>
+                        <label>添加图片：</label>
+                        <input type="file" id="file_input"/>
+                    </p>
+                    <div id="result" hidden></div>
+                </div>
 
-    <div>
-        <!--  图片选择器  -->
+
+                <!--  颜色选择器  -->
+                <div>
+                    颜色: <input id="colorSelect" class="jscolor" value="ab2567">
+                </div>
+                <div class="box-container">
+                    <button class="add-word" style="width: 100px;">添加文字</button>
+                    <button class="upload-image" style="width: 100px;">上传图像</button>
+                    <!--<span class="red-box" contenteditable="true"></span>-->
+                </div>
+
+                <div id="edit-word" style="display: inline-block;width: 250px;"></div>
+            </div>
+        </div>
+
+
         <div>
-            <p>
-                <label>添加图片：</label>
-                <input type="file" id="file_input"/>
-            </p>
-            <div id="result"></div>
+            <!-- 文字这边就当做离屏canvas -->
+            <canvas id="canvas" width="800" height="480" style="display: block;margin: 0 auto;border: 1px solid #aaa">
+                抱歉，你的浏览器不支持Canvas
+            </canvas>
         </div>
 
-
-        <!--  颜色选择器  -->
-        <div>
-            颜色: <input id="colorSelect" class="jscolor" value="ab2567">
-        </div>
-        <div class="box-container">
-            <button class="add-word" style="width: 100px;">添加文字</button>
-            <button class="upload-image" style="width: 100px;">上传图像</button>
-            <!--<span class="red-box" contenteditable="true"></span>-->
-        </div>
-
-        <div id="edit-word" style="display: inline-block;width: 250px;"></div>
     </div>
 
 
@@ -181,6 +195,32 @@
         });
 
         function upload(base64) {
+
+            var fd = new FormData();
+            fd.append("base64", base64);
+
+            // 1. 创建XMLHttpRequest对象
+            var xhr = new XMLHttpRequest();
+            // 2. 规定请求类型，URL、以及是否异步请求处理
+            xhr.open("POST", "http://localhost:8080/user/uploadFaceBase64", true);
+
+            // 3. 将请求发送到服务器
+            xhr.send(fd);
+            xhr.onreadystatechange = fn;// 获得请求的数据之后要做的事
+
+            // 4. 回调函数，接收服务端的响应（readyState=4表明请求已经完成并且响应就绪 status=200表明响应正常）
+            function fn() {
+                console.log(xhr);
+                if (xhr.readyState == 4 && xhr.status == 200) {
+                    // xhr.responseText 请求服务器返回的ajax数据
+
+                    console.log(xhr.responseText);
+                    alert(xhr.responseText);
+                }
+            }
+        }
+
+        function uploadToDB(base64) {
 
             var fd = new FormData();
             fd.append("base64", base64);

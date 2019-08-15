@@ -1,10 +1,20 @@
 package com.stylefeng.guns.controller;
 
+import com.baomidou.mybatisplus.mapper.EntityWrapper;
+import com.baomidou.mybatisplus.mapper.Wrapper;
 import com.mysql.jdbc.Blob;
 import com.stylefeng.guns.Utils.FileUtils;
 import com.stylefeng.guns.Utils.JinboyJSONResult;
+import com.stylefeng.guns.Utils.org.n3r.idworker.Sid;
+import com.stylefeng.guns.modular.housemng.service.IHouseService;
+import com.stylefeng.guns.modular.system.model.House;
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 
 /**
@@ -16,6 +26,12 @@ import org.springframework.web.multipart.MultipartFile;
 @RestController
 @RequestMapping(value = "/user")
 public class UserController {
+
+    @Autowired
+    private IHouseService houseService;
+
+    @Autowired
+    private Sid sid;
 
     @RequestMapping(value = "/test", method = RequestMethod.POST)
     @ResponseBody
@@ -30,18 +46,34 @@ public class UserController {
 //                                                     MultipartFile file,
 //                                             HttpServletRequest request) throws Exception {
 
-
+        Date date = new Date();
+        SimpleDateFormat dateFormat= new SimpleDateFormat("yyyy-MM-dd-hh-mm-ss");
+        System.out.println(dateFormat.format(date));
         // 获取前端传来的base64字符串，然后转换为文件对象再上传
 
         // 获取base64字符串
 //        String base64Data = base64BO.getImgData();
-        String pathTemp = "C:\\Users\\tabjin\\Desktop\\img\\" + "imgBase64.png";
+
+        // 开发机本地存储
+        String pathTemp = "C:\\Users\\tabjin\\Desktop\\img\\" + dateFormat.format(date) + "imgBase64.png";
+
+        // 生产环境
+//        String pathTemp = "生产环境图片保存地址";
 
         FileUtils.base64ToFile(pathTemp, base64);// 文件
 
         MultipartFile imageFile = FileUtils.fileToMultipart(pathTemp);
 
-        return null;
+        House house = new House();
+        house.setId(sid.nextShort());
+        house.setAddress(pathTemp);
+        house.setDate(date);
+        house.setDesc("这是测试数据");
+
+
+        houseService.insert(house);
+
+        return JinboyJSONResult.ok();
 
 //        // 1. 定义文件保存的命名空间
 //        String fileSpace = "C:\\Users\\tabjin\\Desktop\\img";
@@ -83,5 +115,24 @@ public class UserController {
 //            }
 //        }
 //        return null;
+    }
+
+    /**
+     * 获取房屋管理列表
+     */
+    @RequestMapping(value = "/list")
+    @ResponseBody
+    public Object list(String condition) {
+
+        // 1. 判断condition是否有值
+        if (StringUtils.isEmpty(condition)) {
+            // 1.1 condition无值，则查询全部
+            return houseService.selectList(null);
+        }else{
+            // 1.2 condition有值，则按业务名称进行模糊查询
+            EntityWrapper<House> houseEntityWrapper = new EntityWrapper<>();
+            Wrapper<House> houseWrapper = houseEntityWrapper.like("user", condition);// 字段 + 字段值
+            return houseService.selectList(houseWrapper);
+        }
     }
 }
