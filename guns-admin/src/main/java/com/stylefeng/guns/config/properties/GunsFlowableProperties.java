@@ -16,7 +16,7 @@ public class GunsFlowableProperties {
     /**
      * 默认多数据源的链接
      */
-    private String url = "jdbc:mysql://127.0.0.1:3306/guns_flowable?autoReconnect=true&useUnicode=true&characterEncoding=utf8&zeroDateTimeBehavior=convertToNull";
+    private String url = "jdbc:mysql://139.129.99.136:3306/v32_guns_flowable?autoReconnect=true&useUnicode=true&characterEncoding=utf8&zeroDateTimeBehavior=convertToNull";
 
     /**
      * 默认多数据源的数据库账号
@@ -26,7 +26,7 @@ public class GunsFlowableProperties {
     /**
      * 默认多数据源的数据库密码
      */
-    private String password = "root";
+    private String password = "ztgw0206";
 
     public void config(DruidDataSource dataSource) {
         dataSource.setUrl(url);

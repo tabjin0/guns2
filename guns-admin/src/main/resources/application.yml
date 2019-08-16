@@ -32,7 +32,7 @@ spring:
     port: 6379
     password:
   profiles:
-    active: dev
+    active: produce
   mvc:
     static-path-pattern: /static/**
     view:
@@ -88,14 +88,16 @@ spring:
 guns:
   flowable:
     datasource:
-      url: jdbc:mysql://127.0.0.1:3306/v32_guns_flowable?autoReconnect=true&useUnicode=true&characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&useSSL=false
+      url: jdbc:mysql://139.129.99.136:3306/v32_guns_flowable?autoReconnect=true&useUnicode=true&characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&useSSL=false
       username: root
-      password: zj258025
+#      password: zj258025
+      password: ztgw0206
   muti-datasource:
     default-dataSource-name: dataSourceGuns #默认的数据源名称
-    url: jdbc:mysql://127.0.0.1:3306/v32_guns_flowable?autoReconnect=true&useUnicode=true&characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&useSSL=false
+    url: jdbc:mysql://139.129.99.136:3306/v32_guns_flowable?autoReconnect=true&useUnicode=true&characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&useSSL=false
     username: root
-    password: zj258025
+#    password: zj258025
+    password: ztgw0206
 
 logging:
   level.root: info
@@ -111,10 +113,11 @@ logging:
 spring:
   profiles: produce
   datasource:
-      url: jdbc:mysql://127.0.0.1:3306/v32_guns?autoReconnect=true&useUnicode=true&characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&useSSL=false
+      url: jdbc:mysql://139.129.99.136:3306/v32_guns?autoReconnect=true&useUnicode=true&characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&useSSL=false
       username: root
-      password: root
+      password: ztgw0206
       filters: log4j,wall,mergeStat
+
 
 logging:
   level.root: warn
