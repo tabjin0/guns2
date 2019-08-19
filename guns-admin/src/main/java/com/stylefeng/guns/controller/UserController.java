@@ -58,7 +58,7 @@ public class UserController {
         String pathTemp = "C:\\Users\\tabjin\\Desktop\\img\\" + dateFormat.format(date) + "imgBase64.png";
 
         // 生产环境
-//        String pathTemp = "生产环境图片保存地址";
+//        String pathTemp = "/zj/data/card_img" + dateFormat.format(date) + ".png";
 
         FileUtils.base64ToFile(pathTemp, base64);// 文件
 
