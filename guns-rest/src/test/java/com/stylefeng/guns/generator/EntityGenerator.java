@@ -18,8 +18,6 @@ import java.util.Map;
 /**
  * 实体生成
  *
- * @author fengshuonan
- * @date 2017-08-23 12:15
  */
 public class EntityGenerator {
 
@@ -29,13 +27,13 @@ public class EntityGenerator {
 
         // 全局配置
         GlobalConfig gc = new GlobalConfig();
-        gc.setOutputDir("D:\\tmp\\guns\\guns-rest\\src\\main\\java");//这里写你自己的java目录
+        gc.setOutputDir("/Users/Tabbits/Desktop/workspace/Spring Boot/guns2/guns-rest/src/main/java");//这里写你自己的java目录
         gc.setFileOverride(true);//是否覆盖
         gc.setActiveRecord(true);
         gc.setEnableCache(false);// XML 二级缓存
         gc.setBaseResultMap(true);// XML ResultMap
         gc.setBaseColumnList(false);// XML columList
-        gc.setAuthor("stylefeng");
+        gc.setAuthor("tabjin");
         mpg.setGlobalConfig(gc);
 
         // 数据源配置
@@ -50,25 +48,25 @@ public class EntityGenerator {
         });
         dsc.setDriverName("com.mysql.jdbc.Driver");
         dsc.setUsername("root");
-        dsc.setPassword("root");
-        dsc.setUrl("jdbc:mysql://127.0.0.1:3306/rest?characterEncoding=utf8");
+        dsc.setPassword("zj258025");
+        dsc.setUrl("jdbc:mysql://127.0.0.1:3306/v32_guns_rest?characterEncoding=utf8");
         mpg.setDataSource(dsc);
 
         // 策略配置
         StrategyConfig strategy = new StrategyConfig();
         //strategy.setTablePrefix(new String[]{"_"});// 此处可以修改为您的表前缀
         strategy.setNaming(NamingStrategy.underline_to_camel);// 表名生成策略
-        strategy.setInclude(new String[]{"user"});
+        strategy.setInclude(new String[]{"sys_house"});
         mpg.setStrategy(strategy);
 
         // 包配置
         PackageConfig pc = new PackageConfig();
         pc.setParent(null);
-        pc.setEntity("com.stylefeng.guns.rest.persistence.model");
-        pc.setMapper("com.stylefeng.guns.rest.persistence.dao");
+        pc.setEntity("com.stylefeng.guns.rest.persistence.model");// 实体
+        pc.setMapper("com.stylefeng.guns.rest.persistence.dao");// mapper
         pc.setXml("com.stylefeng.guns.rest.persistence.dao.mapping");
-        pc.setService("TTT");       //本项目没用，生成之后删掉
-        pc.setServiceImpl("TTT");   //本项目没用，生成之后删掉
+        pc.setService("com.stylefeng.guns.rest.modular.house.service");       //本项目没用，生成之后删掉
+        pc.setServiceImpl("com.stylefeng.guns.rest.modular.house.service");   //本项目没用，生成之后删掉
         pc.setController("TTT");    //本项目没用，生成之后删掉
         mpg.setPackageInfo(pc);
 

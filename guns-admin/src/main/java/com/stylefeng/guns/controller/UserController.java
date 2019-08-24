@@ -55,10 +55,10 @@ public class UserController {
 //        String base64Data = base64BO.getImgData();
 
         // 开发机本地存储
-        String pathTemp = "C:\\Users\\tabjin\\Desktop\\img\\" + dateFormat.format(date) + "imgBase64.png";
+//        String pathTemp = "C:\\Users\\tabjin\\Desktop\\img\\" + dateFormat.format(date) + "imgBase64.png";
 
         // 生产环境
-//        String pathTemp = "/zj/data/card_img" + dateFormat.format(date) + ".png";
+        String pathTemp = "/zj/data/card_img" + dateFormat.format(date) + ".png";
 
         FileUtils.base64ToFile(pathTemp, base64);// 文件
 
